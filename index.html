@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>タップポイントバトル ver1</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #f6f7fb;
+      --line: #d9dce8;
+      --text: #1f2430;
+      --muted: #667085;
+      --accent: #4f8cff;
+      --accent-strong: #2f6fe6;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Meiryo", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 12px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      min-height: calc(100vh - 24px);
+      background: var(--bg);
+    }
+
+    .screen {
+      display: none;
+      min-height: calc(100vh - 24px);
+      padding: 18px 14px 24px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    h1, h2, p {
+      margin: 0;
+    }
+
+    .title {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .label {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .input-error {
+      min-height: 1.2em;
+      font-size: 0.9rem;
+      color: #d14343;
+      line-height: 1.4;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      outline: none;
+      background: #fff;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.15);
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s ease, opacity 0.2s ease, background 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-strong);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .score-board {
+      text-align: center;
+      padding: 16px;
+    }
+
+    .score-label {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .score-value {
+      font-size: clamp(2.3rem, 8vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .current-rank-card {
+      text-align: center;
+      padding: 18px 18px;
+      height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .current-rank-label {
+      font-size: 1.05rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .current-rank-value {
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.2;
+      transition: font-size 0.2s ease;
+      height: 2.8em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .current-rank-value.rank-1 { font-size: 2.5rem; }
+    .current-rank-value.rank-2 { font-size: 2.25rem; }
+    .current-rank-value.rank-3 { font-size: 2rem; }
+    .current-rank-value.rank-4 { font-size: 1.8rem; }
+    .current-rank-value.rank-5 { font-size: 1.7rem; }
+    .current-rank-value.rank-6 { font-size: 1.6rem; }
+    .current-rank-value.rank-7 { font-size: 1.5rem; }
+    .current-rank-value.rank-8 { font-size: 1.4rem; }
+    .current-rank-value.rank-9 { font-size: 1.3rem; }
+    .current-rank-value.rank-10 { font-size: 1.2rem; }
+
+    .play-area {
+      position: relative;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tap-button-wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 280px;
+      width: 100%;
+    }
+
+    .tap-button {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #73a7ff, var(--accent));
+      color: #fff;
+      font-size: 1.8rem;
+      font-weight: 800;
+      box-shadow: 0 12px 24px rgba(79, 140, 255, 0.28);
+      border: 6px solid #fff;
+    }
+
+    .tap-button.pressed {
+      transform: scale(0.95);
+    }
+
+    .tap-hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .tap-effect-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 3;
+    }
+
+    .tap-plus-one {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--accent-strong);
+      font-size: 1.15rem;
+      font-weight: 800;
+      text-shadow: 0 2px 10px rgba(79, 140, 255, 0.18);
+      animation: floatPlusOne 1.45s linear forwards;
+      white-space: nowrap;
+      z-index: 4;
+    }
+
+    @keyframes floatPlusOne {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0px) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-148px) scale(1.08);
+      }
+    }
+
+    .game-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .list-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      line-height: 1.6;
+    }
+
+    .list-item strong {
+      display: inline-block;
+      min-width: 64px;
+    }
+
+    .chart-card {
+      padding: 16px;
+    }
+
+    .chart-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .chart-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chart-legend-line {
+      width: 18px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--legend-color, #4f8cff);
+      flex: 0 0 auto;
+    }
+
+    .chart-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .chart-caption {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 20px 8px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      padding-bottom: 10px;
+    }
+
+    @media (max-width: 430px) {
+      .screen.active {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .tap-button {
+        width: 180px;
+        height: 180px;
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="titleScreen" class="screen active">
+      <div class="card stack">
+        <h1 class="title">タップポイントバトル</h1>
+        <p class="subtitle">タップしてポイントをためる、シンプルなゲームです。</p>
+      </div>
+
+      <div class="card stack">
+        <label class="label" for="playerNameInput">プレイヤー名</label>
+        <input id="playerNameInput" type="text" maxlength="20" placeholder="名前を入力してください" />
+        <div id="playerNameError" class="input-error" aria-live="polite"></div>
+        <button id="startBtn" class="btn-primary btn-block">スタート</button>
+      </div>
+
+      <div class="card stack">
+        <button id="goTutorialBtn" class="btn-secondary btn-block">チュートリアル</button>
+        <button id="goRankingBtn" class="btn-secondary btn-block">ランキング</button>
+        <button id="goHistoryBtn" class="btn-secondary btn-block">履歴</button>
+        <button id="goSettingsBtn" class="btn-secondary btn-block">設定</button>
+      </div>
+
+      <p class="footer-note">ver1：1タップ1ポイント / 制限時間なし / 累計ポイント持ち越し / ローカル保存対応</p>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="card score-board">
+        <div class="score-label">累計ポイント</div>
+        <div id="scoreValue" class="score-value">0 pt</div>
+      </div>
+
+      <div class="card current-rank-card">
+        <div class="current-rank-label">現在の順位</div>
+        <div id="currentRankValue" class="current-rank-value">あなたは現在、-位です</div>
+      </div>
+
+      <div class="card play-area">
+        <div id="tapEffectLayer" class="tap-effect-layer"></div>
+        <div class="tap-button-wrap">
+          <button id="tapBtn" class="tap-button">TAP</button>
+          <div class="tap-hint">押すたびに 1ポイント</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top-bar">
+          <h2 style="font-size:1.05rem;">ランキング</h2>
+          <span class="small">プレイヤー名 / 累計ポイント</span>
+        </div>
+        <div id="gameRankingList" class="list" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="game-actions">
+        <button id="backTitleBtn" class="btn-primary">タイトルへ戻る</button>
+      </div>
+    </section>
+
+    <section id="tutorialScreen" class="screen">
+      <div class="card top-bar">
+        <h2>チュートリアル</h2>
+        <button class="btn-secondary" data-back="title">戻る</button>
+      </div>
+      <div class="card">
+        <div class="empty">チュートリアル内容はあとで追加します。</div>
+      </div>
+    </section>
+
+    <section id="historyScreen" class="screen">
+      <div class="card top-bar">
+        <h2>履歴</h2>
+        <button class="btn-secondary" data-back="title">戻る</button>
+      </div>
+      <div class="card">
+        <div id="historyList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="rankingScreen" class="screen">
+      <div class="card top-bar">
+        <h2>ローカルランキング</h2>
+        <button class="btn-secondary" data-back="title">戻る</button>
+      </div>
+      <div class="card chart-card">
+        <div class="chart-title">プレイヤーごとの時系列グラフ</div>
+        <div class="chart-wrap">
+          <canvas id="rankingChartCanvas" class="chart-canvas" width="480" height="240"></canvas>
+        </div>
+        <div id="chartLegend" class="chart-legend"></div>
+        <div class="chart-caption">履歴データから、各プレイヤーの累計ポイントの変化を時系列で折れ線表示します。</div>
+      </div>
+      <div class="card">
+        <div id="rankingList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="settingsScreen" class="screen">
+      <div class="card top-bar">
+        <h2>設定</h2>
+        <button class="btn-secondary" data-back="title">戻る</button>
+      </div>
+      <div class="card stack">
+        <label class="toggle">
+          <input id="soundToggle" type="checkbox" />
+          音を鳴らす
+        </label>
+        <p class="small">タップ音の ON / OFF を切り替えられます。</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      "use strict";
+
+      var STORAGE_KEY = "tap_point_battle_ver1_data";
+      var MAX_HISTORY = 50;
+      var MAX_RANKING = 10;
+      var audioContext = null;
+
+      function createDefaultData() {
+        return {
+          playerName: "",
+          totalPlays: 0,
+          totalPoints: 0,
+          playerTotals: {},
+          soundEnabled: true,
+          history: [],
+          ranking: []
+        };
+      }
+
+      function loadData() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return createDefaultData();
+          }
+          var parsed = JSON.parse(raw);
+          var base = createDefaultData();
+          if (parsed && typeof parsed === "object") {
+            base.playerName = typeof parsed.playerName === "string" ? parsed.playerName : "";
+            base.totalPlays = Number(parsed.totalPlays) || 0;
+            base.totalPoints = Number(parsed.totalPoints) || 0;
+            base.playerTotals = parsed.playerTotals && typeof parsed.playerTotals === "object" ? parsed.playerTotals : {};
+            base.soundEnabled = parsed.soundEnabled !== false;
+            base.history = Array.isArray(parsed.history) ? parsed.history : [];
+            base.ranking = Array.isArray(parsed.ranking) ? parsed.ranking : [];
+          }
+          return base;
+        } catch (error) {
+          return createDefaultData();
+        }
+      }
+
+      var saveData = loadData();
+      var state = {
+        score: 0,
+        isPlaying: false,
+        playStartAt: null,
+        playStartScore: 0,
+        currentPlayerName: ""
+      };
+
+      var screens = {
+        title: document.getElementById("titleScreen"),
+        game: document.getElementById("gameScreen"),
+        history: document.getElementById("historyScreen"),
+        tutorial: document.getElementById("tutorialScreen"),
+        ranking: document.getElementById("rankingScreen"),
+        settings: document.getElementById("settingsScreen")
+      };
+
+      var playerNameInput = document.getElementById("playerNameInput");
+      var playerNameError = document.getElementById("playerNameError");
+      var scoreValue = document.getElementById("scoreValue");
+      var currentRankValue = document.getElementById("currentRankValue");
+      var tapBtn = document.getElementById("tapBtn");
+      var tapEffectLayer = document.getElementById("tapEffectLayer");
+      var soundToggle = document.getElementById("soundToggle");
+      var historyList = document.getElementById("historyList");
+      var rankingList = document.getElementById("rankingList");
+      var gameRankingList = document.getElementById("gameRankingList");
+      var rankingChartCanvas = document.getElementById("rankingChartCanvas");
+      var chartLegend = document.getElementById("chartLegend");
+      var startBtn = document.getElementById("startBtn");
+      var goTutorialBtn = document.getElementById("goTutorialBtn");
+      var goHistoryBtn = document.getElementById("goHistoryBtn");
+      var goRankingBtn = document.getElementById("goRankingBtn");
+      var goSettingsBtn = document.getElementById("goSettingsBtn");
+      var backTitleBtn = document.getElementById("backTitleBtn");
+
+      function persist() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+      }
+
+      function normalizePlayerName(name) {
+        var trimmed = String(name || "").trim();
+        return trimmed || "プレイヤー";
+      }
+
+      function getPlayerTotal(name) {
+        var normalized = normalizePlayerName(name);
+        return Number(saveData.playerTotals[normalized]) || 0;
+      }
+
+      function setPlayerTotal(name, total) {
+        var normalized = normalizePlayerName(name);
+        saveData.playerTotals[normalized] = Math.max(0, Number(total) || 0);
+        if (normalizePlayerName(saveData.playerName) === normalized) {
+          saveData.totalPoints = saveData.playerTotals[normalized];
+        }
+      }
+
+      function showScreen(name) {
+        Object.keys(screens).forEach(function (key) {
+          if (screens[key]) {
+            screens[key].classList.remove("active");
+          }
+        });
+        if (screens[name]) {
+          screens[name].classList.add("active");
+        }
+      }
+
+      function syncSettingsUI() {
+        if (soundToggle) {
+          soundToggle.checked = !!saveData.soundEnabled;
+        }
+      }
+
+      function updateScore() {
+        if (scoreValue) {
+          scoreValue.textContent = String(state.score) + " pt";
+        }
+      }
+
+      function animateTapButton() {
+        if (!tapBtn) return;
+        tapBtn.classList.add("pressed");
+        window.setTimeout(function () {
+          tapBtn.classList.remove("pressed");
+        }, 90);
+      }
+
+      function showPlusOneEffect() {
+        if (!tapBtn || !tapEffectLayer) return;
+
+        var effect = document.createElement("div");
+        effect.className = "tap-plus-one";
+        effect.textContent = "+1pt";
+
+        var buttonRect = tapBtn.getBoundingClientRect();
+        var layerRect = tapEffectLayer.getBoundingClientRect();
+        var centerX = buttonRect.left - layerRect.left + buttonRect.width / 2;
+        var centerY = buttonRect.top - layerRect.top + buttonRect.height / 2 - 18;
+        effect.style.left = String(centerX) + "px";
+        effect.style.top = String(centerY) + "px";
+        tapEffectLayer.appendChild(effect);
+
+        effect.addEventListener("animationend", function () {
+          if (effect.parentNode) {
+            effect.parentNode.removeChild(effect);
+          }
+        });
+      }
+
+      function formatDate(isoString) {
+        var d = new Date(isoString);
+        if (isNaN(d.getTime())) return "日時不明";
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, "0");
+        var day = String(d.getDate()).padStart(2, "0");
+        var hh = String(d.getHours()).padStart(2, "0");
+        var mm = String(d.getMinutes()).padStart(2, "0");
+        return y + "/" + m + "/" + day + " " + hh + ":" + mm;
+      }
+
+      function formatPlaySeconds(sec) {
+        var safeSec = Math.max(0, Number(sec) || 0);
+        var minutes = Math.floor(safeSec / 60);
+        var seconds = safeSec % 60;
+        return minutes > 0 ? String(minutes) + "分" + String(seconds) + "秒" : String(seconds) + "秒";
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function renderHistory() {
+        if (!historyList) return;
+        historyList.innerHTML = "";
+
+        if (!saveData.history.length) {
+          historyList.innerHTML = '<div class="empty">まだ履歴がありません。</div>';
+          return;
+        }
+
+        saveData.history.forEach(function (item, index) {
+          var div = document.createElement("div");
+          div.className = "list-item";
+          var gainedPoints = typeof item.gainedPoints === "number" ? item.gainedPoints : Number(item.gainedPoints) || 0;
+          div.innerHTML = '' +
+            '<div><strong>#' + String(saveData.history.length - index) + '</strong> ' + escapeHtml(item.playerName || "プレイヤー") + '</div>' +
+            '<div><strong>日時</strong> ' + formatDate(item.playedAt) + '</div>' +
+            '<div><strong>累計</strong> ' + String(Number(item.score) || 0) + ' pt</div>' +
+            '<div><strong>増加分</strong> ' + String(gainedPoints) + ' pt</div>' +
+            '<div><strong>時間</strong> ' + formatPlaySeconds(item.playSeconds) + '</div>';
+          historyList.appendChild(div);
+        });
+      }
+
+      function getSeriesColor(index) {
+        var palette = ['#4f8cff', '#ff8f4f', '#57c785', '#bb6bd9', '#f2c94c', '#e056a7', '#2d9cdb', '#f2994a'];
+        return palette[index % palette.length];
+      }
+
+      function buildHistorySeries() {
+        var grouped = {};
+        var history = saveData.history.slice().reverse();
+
+        history.forEach(function (item, globalIndex) {
+          var name = normalizePlayerName(item.playerName);
+          if (!grouped[name]) {
+            grouped[name] = [];
+          }
+          grouped[name].push({
+            x: globalIndex,
+            y: Number(item.score) || 0,
+            playedAt: item.playedAt || '',
+            playerName: name
+          });
+        });
+
+        return Object.keys(grouped)
+          .sort(function (a, b) {
+            return a.localeCompare(b, 'ja');
+          })
+          .map(function (name) {
+            return {
+              playerName: name,
+              points: grouped[name]
+            };
+          });
+      }
+
+      function drawRankingChart() {
+        if (!rankingChartCanvas) return;
+        var ctx = rankingChartCanvas.getContext('2d');
+        if (!ctx) return;
+
+        var width = rankingChartCanvas.width;
+        var height = rankingChartCanvas.height;
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+
+        if (chartLegend) {
+          chartLegend.innerHTML = '';
+        }
+
+        var seriesList = buildHistorySeries();
+        var allPoints = [];
+        seriesList.forEach(function (series) {
+          series.points.forEach(function (point) {
+            allPoints.push(point);
+          });
+        });
+
+        if (!seriesList.length || !allPoints.length) {
+          ctx.fillStyle = '#667085';
+          ctx.font = '14px Meiryo, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('履歴データがまだありません', width / 2, height / 2);
+          return;
+        }
+
+        var padding = { top: 20, right: 18, bottom: 42, left: 44 };
+        var chartW = width - padding.left - padding.right;
+        var chartH = height - padding.top - padding.bottom;
+        var maxScore = Math.max.apply(null, allPoints.map(function (point) { return point.y; }));
+        var minX = 0;
+        var maxX = Math.max.apply(null, allPoints.map(function (point) { return point.x; }));
+        var safeMaxScore = Math.max(10, maxScore);
+        var safeMaxX = Math.max(1, maxX);
+
+        ctx.strokeStyle = '#d9dce8';
+        ctx.lineWidth = 1;
+        for (var i = 0; i <= 4; i += 1) {
+          var gy = padding.top + (chartH / 4) * i;
+          ctx.beginPath();
+          ctx.moveTo(padding.left, gy);
+          ctx.lineTo(width - padding.right, gy);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = '#98a2b3';
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, height - padding.bottom);
+        ctx.lineTo(width - padding.right, height - padding.bottom);
+        ctx.stroke();
+
+        function mapX(value) {
+          return padding.left + ((value - minX) / safeMaxX) * chartW;
+        }
+
+        function mapY(value) {
+          return padding.top + chartH - (value / safeMaxScore) * chartH;
+        }
+
+        seriesList.forEach(function (series, seriesIndex) {
+          var color = getSeriesColor(seriesIndex);
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          series.points.forEach(function (point, pointIndex) {
+            var x = mapX(point.x);
+            var y = mapY(point.y);
+            if (pointIndex === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+
+          series.points.forEach(function (point) {
+            var x = mapX(point.x);
+            var y = mapY(point.y);
+            ctx.beginPath();
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          if (chartLegend) {
+            var legendItem = document.createElement('div');
+            legendItem.className = 'chart-legend-item';
+            var legendLine = document.createElement('span');
+            legendLine.className = 'chart-legend-line';
+            legendLine.style.setProperty('--legend-color', color);
+            var legendText = document.createElement('span');
+            legendText.textContent = series.playerName;
+            legendItem.appendChild(legendLine);
+            legendItem.appendChild(legendText);
+            chartLegend.appendChild(legendItem);
+          }
+        });
+
+        ctx.fillStyle = '#667085';
+        ctx.font = '12px Meiryo, sans-serif';
+        ctx.textAlign = 'right';
+        for (var j = 0; j <= 4; j += 1) {
+          var value = Math.round((safeMaxScore / 4) * (4 - j));
+          var ly = padding.top + (chartH / 4) * j + 4;
+          ctx.fillText(String(value), padding.left - 6, ly);
+        }
+
+        ctx.textAlign = 'center';
+        var ticks = Math.min(5, safeMaxX + 1);
+        for (var k = 0; k < ticks; k += 1) {
+          var tickValue = ticks === 1 ? 0 : Math.round((safeMaxX / (ticks - 1)) * k);
+          var tx = mapX(tickValue);
+          ctx.fillText(String(tickValue + 1) + '回目', tx, height - 16);
+        }
+      }
+
+      function renderRanking() {
+        if (rankingList) rankingList.innerHTML = "";
+        if (gameRankingList) gameRankingList.innerHTML = "";
+
+        var entries = Object.keys(saveData.playerTotals)
+          .map(function (name) {
+            return { playerName: name, score: Number(saveData.playerTotals[name]) || 0 };
+          })
+          .sort(function (a, b) {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.playerName.localeCompare(b.playerName, "ja");
+          })
+          .slice(0, MAX_RANKING);
+
+        saveData.ranking = entries.map(function (item) {
+          return { playerName: item.playerName, score: item.score, playedAt: new Date().toISOString() };
+        });
+
+        drawRankingChart();
+
+        var currentPlayer = normalizePlayerName(state.currentPlayerName || saveData.playerName || (playerNameInput ? playerNameInput.value : ""));
+        var currentRank = null;
+
+        if (!entries.length) {
+          if (rankingList) rankingList.innerHTML = '<div class="empty">まだランキング記録がありません。</div>';
+          if (gameRankingList) gameRankingList.innerHTML = '<div class="empty">まだランキング記録がありません。</div>';
+          if (currentRankValue) currentRankValue.textContent = 'あなたは現在、-位です';
+          return;
+        }
+
+        var lastScore = null;
+        var displayRank = 0;
+
+        entries.forEach(function (item, index) {
+          if (lastScore === null || item.score !== lastScore) {
+            displayRank = index + 1;
+            lastScore = item.score;
+          }
+
+          if (item.playerName === currentPlayer && currentRank === null) {
+            currentRank = displayRank;
+          }
+
+          var rankLabel = String(displayRank) + '位';
+          var fullHtml = '<div><strong>' + rankLabel + '</strong> ' + escapeHtml(item.playerName || 'プレイヤー') + '</div>' +
+            '<div><strong>スコア</strong> ' + String(Number(item.score) || 0) + ' pt</div>';
+          var simpleHtml = '<div><strong>' + rankLabel + '</strong> ' + escapeHtml(item.playerName || 'プレイヤー') + '</div>' +
+            '<div><strong>累計</strong> ' + String(Number(item.score) || 0) + ' pt</div>';
+
+          if (rankingList) {
+            var div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = fullHtml;
+            rankingList.appendChild(div);
+          }
+          if (gameRankingList) {
+            var gameDiv = document.createElement('div');
+            gameDiv.className = 'list-item';
+            gameDiv.innerHTML = simpleHtml;
+            gameRankingList.appendChild(gameDiv);
+          }
+        });
+
+        if (currentRankValue) {
+          currentRankValue.className = 'current-rank-value';
+          if (currentRank === null) currentRankValue.textContent = 'あなたは現在、-位です';
+          else {
+            currentRankValue.textContent = 'あなたは現在、' + String(currentRank) + '位です';
+            if (currentRank >= 1 && currentRank <= 10) currentRankValue.classList.add('rank-' + String(currentRank));
+          }
+        }
+      }
+
+      function startGame() {
+        var rawPlayerName = playerNameInput ? playerNameInput.value : "";
+        if (!String(rawPlayerName || "").trim()) {
+          if (playerNameError) playerNameError.textContent = 'プレイヤー名を入力してください。';
+          if (playerNameInput) playerNameInput.focus();
+          return;
+        }
+
+        if (playerNameError) playerNameError.textContent = '';
+
+        var playerName = normalizePlayerName(rawPlayerName);
+        saveData.playerName = playerName;
+        state.currentPlayerName = playerName;
+        saveData.totalPoints = getPlayerTotal(playerName);
+        persist();
+
+        state.score = getPlayerTotal(playerName);
+        state.isPlaying = true;
+        state.playStartAt = Date.now();
+        state.playStartScore = state.score;
+        if (tapEffectLayer) tapEffectLayer.innerHTML = '';
+
+        updateScore();
+        renderRanking();
+        showScreen('game');
+      }
+
+      function onTapMainButton() {
+        if (!state.isPlaying) return;
+        state.score += 1;
+        setPlayerTotal(state.currentPlayerName, state.score);
+        persist();
+        updateScore();
+        renderRanking();
+        animateTapButton();
+        showPlusOneEffect();
+        playTapSound();
+      }
+
+      function buildSaveMessage(playerName, totalScore, gainedPoints, playSeconds) {
+        return playerName + ' さん\n' +
+          '累計ポイント: ' + String(totalScore) + ' pt\n' +
+          '今回増えたポイント: ' + String(gainedPoints) + ' pt\n' +
+          'プレイ時間: ' + formatPlaySeconds(playSeconds) + '\n\n' +
+          '結果を保存しました。';
+      }
+
+      function finalizeCurrentPlay(options) {
+        if (!state.isPlaying) return;
+
+        var endTime = Date.now();
+        var playSeconds = Math.floor(Math.max(0, endTime - state.playStartAt) / 1000);
+        var playerName = normalizePlayerName(state.currentPlayerName || saveData.playerName);
+        var now = new Date();
+        var gainedPoints = Math.max(0, state.score - state.playStartScore);
+        var shouldAlert = !options || options.showAlert !== false;
+
+        setPlayerTotal(playerName, state.score);
+        saveData.playerName = playerName;
+
+        var historyItem = {
+          playerName: playerName,
+          score: state.score,
+          gainedPoints: gainedPoints,
+          playedAt: now.toISOString(),
+          playSeconds: playSeconds
+        };
+
+        saveData.totalPlays += 1;
+        saveData.totalPoints = getPlayerTotal(playerName);
+        saveData.history.unshift(historyItem);
+        saveData.history = saveData.history.slice(0, MAX_HISTORY);
+
+        persist();
+        renderRanking();
+
+        if (shouldAlert) alert(buildSaveMessage(playerName, state.score, gainedPoints, playSeconds));
+
+        state.isPlaying = false;
+        if (tapEffectLayer) tapEffectLayer.innerHTML = '';
+        renderHistory();
+        showScreen('title');
+      }
+
+      function backToTitleFromGame() {
+        if (!state.isPlaying) {
+          if (playerNameError) playerNameError.textContent = '';
+          showScreen('title');
+          return;
+        }
+        finalizeCurrentPlay({ showAlert: false });
+        if (playerNameError) playerNameError.textContent = '';
+      }
+
+      function getAudioContext() {
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        if (!audioContext) audioContext = new AudioContextClass();
+        return audioContext;
+      }
+
+      function playBeep(frequency, duration, volume, type) {
+        if (!saveData.soundEnabled) return;
+        var ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume().catch(function () {});
+
+        var oscillator = ctx.createOscillator();
+        var gain = ctx.createGain();
+        oscillator.type = type || 'sine';
+        oscillator.frequency.value = frequency;
+        gain.gain.value = volume;
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        var now = ctx.currentTime;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        oscillator.start(now);
+        oscillator.stop(now + duration + 0.02);
+      }
+
+      function playTapSound() {
+        playBeep(660, 0.03, 0.03, 'triangle');
+      }
+
+      function runSelfChecks() {
+        console.assert(typeof state === 'object', 'state should be initialized');
+        console.assert(typeof saveData === 'object', 'saveData should be initialized');
+        console.assert(typeof startGame === 'function', 'startGame should exist');
+        console.assert(typeof finalizeCurrentPlay === 'function', 'finalizeCurrentPlay should exist');
+        console.assert(formatPlaySeconds(0) === '0秒', 'formatPlaySeconds(0) should be 0秒');
+        console.assert(formatPlaySeconds(61) === '1分1秒', 'formatPlaySeconds(61) should be 1分1秒');
+        console.assert(escapeHtml('<a>') === '&lt;a&gt;', 'escapeHtml should escape brackets');
+        console.assert(buildSaveMessage('A', 10, 3, 61).indexOf('\n') >= 0, 'buildSaveMessage should contain line breaks');
+        console.assert(buildSaveMessage('A', 10, 3, 61).indexOf('累計ポイント: 10 pt') >= 0, 'buildSaveMessage should contain score text');
+        console.assert(getPlayerTotal('テスト') === 0, 'unknown player total should be 0');
+        console.assert(typeof renderRanking === 'function', 'renderRanking should exist');
+        console.assert(document.querySelectorAll('[data-back="title"]').length >= 1, 'back buttons should exist');
+        console.assert(!!document.getElementById('goTutorialBtn'), 'goTutorialBtn should exist');
+        console.assert(playerNameInput ? playerNameInput.value === (saveData.playerName || '') : true, 'playerNameInput should keep saved name');
+        console.assert(!!playerNameError, 'playerNameError should exist');
+        console.assert(/pt/.test(buildSaveMessage('B', 1, 1, 0)), 'save message should include pt');
+        console.assert(getComputedStyle(currentRankValue).fontSize.length > 0, 'currentRankValue should have font size');
+        console.assert(document.styleSheets.length >= 1, 'stylesheets should exist for rank classes');
+        console.assert(parseFloat(getComputedStyle(currentRankValue).height) > 0, 'currentRankValue should have fixed height');
+        console.assert(parseFloat(getComputedStyle(document.querySelector('.current-rank-card')).height) > 0, 'current-rank-card should have fixed height');
+        console.assert(!!rankingChartCanvas, 'rankingChartCanvas should exist');
+        console.assert(!!chartLegend, 'chartLegend should exist');
+        console.assert(typeof drawRankingChart === 'function', 'drawRankingChart should exist');
+        console.assert(typeof buildHistorySeries === 'function', 'buildHistorySeries should exist');
+      }
+
+      function init() {
+        if (playerNameInput) playerNameInput.value = saveData.playerName || '';
+        if (playerNameError) playerNameError.textContent = '';
+        syncSettingsUI();
+        state.currentPlayerName = normalizePlayerName(saveData.playerName || 'プレイヤー');
+        state.score = getPlayerTotal(state.currentPlayerName);
+        saveData.totalPoints = state.score;
+        updateScore();
+        renderHistory();
+        renderRanking();
+        runSelfChecks();
+      }
+
+      if (startBtn) startBtn.addEventListener('click', startGame);
+      if (goTutorialBtn) goTutorialBtn.addEventListener('click', function () { showScreen('tutorial'); });
+      if (goHistoryBtn) goHistoryBtn.addEventListener('click', function () { renderHistory(); showScreen('history'); });
+      if (goRankingBtn) goRankingBtn.addEventListener('click', function () { renderRanking(); showScreen('ranking'); });
+      if (goSettingsBtn) goSettingsBtn.addEventListener('click', function () { syncSettingsUI(); showScreen('settings'); });
+      if (backTitleBtn) backTitleBtn.addEventListener('click', backToTitleFromGame);
+      if (tapBtn) tapBtn.addEventListener('click', onTapMainButton);
+
+      Array.prototype.forEach.call(document.querySelectorAll('[data-back="title"]'), function (btn) {
+        btn.addEventListener('click', function () {
+          if (playerNameError) playerNameError.textContent = '';
+          showScreen('title');
+        });
+      });
+
+      if (soundToggle) {
+        soundToggle.addEventListener('change', function () {
+          saveData.soundEnabled = soundToggle.checked;
+          persist();
+        });
+      }
+
+      if (playerNameInput) {
+        playerNameInput.addEventListener('input', function () {
+          var rawName = playerNameInput.value;
+          if (playerNameError && String(rawName || '').trim()) playerNameError.textContent = '';
+          var playerName = normalizePlayerName(rawName);
+          saveData.playerName = playerName;
+          saveData.totalPoints = getPlayerTotal(playerName);
+          if (!state.isPlaying) {
+            state.score = saveData.totalPoints;
+            updateScore();
+          }
+          persist();
+          renderRanking();
+        });
+      }
+
+      init();
+    });
+  </script>
+</body>
+</html>
